@@ -1,0 +1,11 @@
+{
+  "games": [
+    {
+      "id": "silver-road",
+      "name": "Silver Road",
+      "tagline": "Race. Explore. Compete.",
+      "description": "Drive, race, explore and compete in Silver Road. Included with Vexora \u2014 ready to play.",
+      "manifestUrl": "https://raw.githubusercontent.com/Floris-Games/vexora-updates/main/silver-road/manifest.json"
+    }
+  ]
+}

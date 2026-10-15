@@ -1,0 +1,8 @@
+{
+  "version": "1.0.1",
+  "downloadUrl": "https://github.com/Floris-Games/vexora-updates/releases/download/silver-road-v1.0.1/Silver-Road-v1.0.1.zip",
+  "sha256": "REPLACE_WITH_ACTUAL_SHA256_FROM_PUBLISH_SCRIPT",
+  "executable": "silver-road.html",
+  "title": "Silver Road 1.0.1",
+  "notes": "Your first online Silver Road update."
+}

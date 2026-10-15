@@ -1,0 +1,23 @@
+VEXORA - MANUAL GAME UPDATES
+
+The Silver Road game bundled with this launcher remains playable even when offline.
+Vexora checks https://raw.githubusercontent.com/Floris-Games/vexora-updates/main/silver-road/manifest.json
+and shows UPDATE GAME only when the online version is newer than the installed/bundled version.
+
+FIRST SETUP (one time):
+1. Create public GitHub repository Floris-Games/vexora-updates (if it does not exist).
+2. In that repository, create silver-road/manifest.json using the generated manifest below.
+3. Build and distribute this Vexora installer once.
+
+FOR EACH NEW SILVER ROAD VERSION (no launcher rebuild):
+1. Double-click PUBLISH-SILVER-ROAD.bat and supply the latest HTML path and version,
+   OR run: py publish-game.py "C:\path\latest-game.html" 1.0.1
+2. In GitHub, create a release tagged silver-road-v1.0.1, attach the ZIP from publish-output.
+3. Upload the generated manifest.json to silver-road/manifest.json in your repository.
+4. In Vexora, click CHECK FOR UPDATES; then UPDATE GAME.
+
+For additional games, add their own entries to config.json (requires a launcher update),
+or implement a remote catalog in a later version to add games without updating Vexora.
+
+SECURITY: Release archives are SHA-256 checked and require HTTPS. Only publish trusted games.
+NOTE: No real GitHub repository or release has been created by this package.

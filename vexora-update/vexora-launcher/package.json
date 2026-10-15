@@ -1,0 +1,65 @@
+{
+  "name": "vexora-launcher",
+  "version": "1.2.0",
+  "description": "Vexora multi-game launcher",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis",
+    "portable": "electron-builder --win dir",
+    "test": "node --test tests/*.test.cjs",
+    "release": "node release-config.cjs && electron-builder --config electron-builder.release.cjs --win nsis --x64 --publish always"
+  },
+  "devDependencies": {
+    "electron": "44.7.2",
+    "electron-builder": "26.15.3"
+  },
+  "dependencies": {
+    "adm-zip": "0.6.1",
+    "electron-updater": "6.8.9"
+  },
+  "build": {
+    "appId": "com.vexora.launcher",
+    "productName": "Vexora",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "renderer.js",
+      "style.css",
+      "config.json",
+      "package.json",
+      "auth.js",
+      "auth-config.json",
+      "games/**/*",
+      "online-game.js",
+      "assets/**/*",
+      "launcher-updater.js"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": true,
+      "verifyUpdateCodeSignature": true
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Vexora",
+      "artifactName": "VexoraSetup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Floris-Games",
+        "repo": "vexora-updates",
+        "releaseType": "draft"
+      }
+    ]
+  }
+}

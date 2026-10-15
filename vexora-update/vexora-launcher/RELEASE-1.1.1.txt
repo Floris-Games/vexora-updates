@@ -1,0 +1,49 @@
+VEXORA 1.1.1 - Silver Road direct online launch
+
+Install VexoraSetup-1.1.1.exe, open Library, select Silver Road and press Play.
+Silver Road opens directly at its hosted /game address in one game window.
+Multiplayer offers Host a Party and Join Party immediately.
+Repeated Play clicks focus the existing game window. Closing it allows a fresh
+launch. Failed initial connections report a launch error and allow another try.
+An internet connection and the existing hosted game service are required.
+
+The approved banner is on Home; the square artwork is used in the game cards.
+The original bundled HTML remains included unchanged as reference/offline data.
+Play uses the hosted game even if an older local HTML or EXE update is installed.
+Silver Road gameplay updates therefore come from the hosted site. The existing
+manual download/update mechanism remains present and unchanged; local update
+packages do not replace the hosted Silver Road page.
+
+Preserved without changes: auth.js, auth-config.json, preload.js, config.json,
+bundled Silver Road HTML, and the updater implementation. Existing account
+storage and installation paths/app identity are retained. Launcher login and
+the hosted game's login remain separate, as in the supplied version.
+
+Verification performed on Windows:
+- Automated launch tests: bundled/installed HTML/installed EXE Silver Road all
+  use online launch; repeated/concurrent clicks reuse one window; minimize,
+  close/reopen, failed load/retry; popup/navigation restrictions; other games'
+  local HTML and EXE launch paths; auth and updater handlers remain registered.
+- Real Electron smoke test: both artwork images decoded and displayed; hosted
+  game loaded and rendered; multiplayer entry available without Open Online
+  Game; repeated Play left one launcher plus one game window.
+- Live room API: host, second-player join, sync, ready both players, start match
+  (server phase driving), then leave both players.
+- Windows x64 NSIS installer build completed. Installer is unsigned.
+
+Limits: no user credentials were supplied, so live login, sign-up, email codes
+and password reset were not exercised. No live game update was installed and
+no full two-computer driving/WebRTC race was played. The installer was built,
+but not run against an existing user installation.
+
+Source/build:
+  npm ci
+  npm start
+  npm run dist
+Installer: dist/VexoraSetup-1.1.1.exe
+Tests: node test-launch.cjs; node check-online.cjs (requires internet and creates
+temporary rooms); electron smoke-electron.cjs (uses isolated test user data).
+package-lock.json is included for repeatable dependency installation.
+
+Changed files: main.js, new online-game.js, renderer.js, index.html, style.css,
+package.json, package-lock.json, new assets and verification scripts/notes.

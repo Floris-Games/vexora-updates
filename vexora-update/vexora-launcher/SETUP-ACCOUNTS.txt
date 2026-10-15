@@ -1,0 +1,16 @@
+VEXORA ACCOUNTS - ONE-TIME SETUP
+
+1. Create a free project at https://supabase.com/dashboard
+2. Open Project Settings / API (or Connect). Copy Project URL and PUBLISHABLE key (or legacy anon key). NEVER use the secret/service_role key.
+3. Edit auth-config.json, replace both placeholders, keeping quotation marks.
+4. In Supabase > Authentication > Providers > Email: enable Email and Confirm email.
+5. In Authentication > Email Templates:
+   - Confirm signup: change the template to show a six-digit token: {{ .Token }} (not only a link).
+   - Reset password: change the template to show: {{ .Token }}.
+   - Keep the token placeholder exact.
+6. For testing, Supabase default email service has restrictive sending limits and may only send to authorized addresses. For friends, configure a proper SMTP provider in Authentication > SMTP settings and verify your sending domain.
+7. Double-click BUILD-SETUP.bat. Share the installer only after testing a real signup, confirmation, login, password reset, logout, and restart.
+
+Security: passwords are sent directly over HTTPS to Supabase Auth and not saved by the launcher. Sessions are encrypted locally using Electron safeStorage when available. Never put a service_role/secret key in this desktop app.
+
+Note: Vexora accounts do not automatically connect to Silver Road accounts or game multiplayer. Game downloads are still a separate feature.

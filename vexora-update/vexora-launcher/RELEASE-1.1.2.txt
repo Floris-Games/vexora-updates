@@ -1,0 +1,20 @@
+VEXORA 1.1.2 - Explore Game button
+
+The featured banner now has a dedicated keyboard-accessible button positioned
+over the artwork's Explore Game label. Clicking it selects Silver Road and
+scrolls directly to its Play/update panel in Library. If the catalog is still
+loading, the button waits for it and reports any failure in the status area.
+
+Verified in the actual Electron launcher with a mouse click at the button's
+center: Library became visible, Silver Road was selected, and its details
+panel opened. The online launch smoke test and launch regression checks passed.
+The Windows installer was rebuilt, and its packaged source/assets verified.
+
+Single-window online launch, multiplayer, login and updater behavior are retained
+from 1.1.1. See RELEASE-1.1.1.txt for the earlier multiplayer checks and test limits.
+
+This installer remains unsigned. Signing requires a trusted signing certificate
+or service; this release does not change Windows Smart App Control behavior.
+
+Use VexoraSetup-1.1.2.exe, or extract the source ZIP and use the same existing
+build/export workflow. Standard commands: npm ci; npm start; npm run dist.
