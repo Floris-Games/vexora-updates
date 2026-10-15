@@ -24,8 +24,22 @@ window.vexora.auth.status().then(s=>{if(s.user)signedIn(s.user);else $('authMess
 
 
 
-function launcherState(s){$('launcherVersion').textContent='Launcher v'+s.currentVersion;$('launcherStatus').textContent=s.message;$('launcherUpdate').hidden=!['available','downloaded'].includes(s.phase);$('launcherUpdate').disabled=false;$('launcherCheck').disabled=['checking','downloading','installing'].includes(s.phase);}
+function launcherState(s){
+ const button=$('launcherCheck'),status=$('launcherStatus');
+ $('launcherVersion').textContent='Launcher v'+s.currentVersion;
+ status.textContent=s.message;
+ const busy=['checking','downloading','installing'].includes(s.phase);
+ const upToDate=s.phase==='idle'&&s.message==='Your launcher is up to date.';
+ button.classList.toggle('upToDate',upToDate);
+ button.classList.toggle('spinning',s.phase==='checking');
+ button.classList.toggle('hasUpdate',['available','downloaded'].includes(s.phase));
+ button.classList.toggle('updateError',s.phase==='error');
+ const label=upToDate?'Launcher is up to date. Check again':s.message+' Click to check launcher updates.';
+ button.title=label;button.setAttribute('aria-label',label);button.disabled=busy||s.phase==='disabled';
+ status.classList.toggle('visuallyHidden',!['error','downloading','installing','downloaded'].includes(s.phase));
+ $('launcherUpdate').hidden=!['available','downloaded'].includes(s.phase);$('launcherUpdate').disabled=false;
+}
 window.vexora.onLauncherUpdate(launcherState);
 window.vexora.launcherStatus().then(launcherState).catch(()=>{});
-$('launcherCheck').onclick=()=>window.vexora.launcherCheck().then(launcherState).catch(e=>$('launcherStatus').textContent=e.message);
-$('launcherUpdate').onclick=async()=>{ $('launcherUpdate').disabled=true;try{launcherState(await window.vexora.launcherUpdate())}catch(e){$('launcherStatus').textContent=e.message;$('launcherUpdate').disabled=false;}};
+$('launcherCheck').onclick=()=>window.vexora.launcherCheck().then(launcherState).catch(()=>{});
+$('launcherUpdate').onclick=async()=>{ $('launcherUpdate').disabled=true;try{launcherState(await window.vexora.launcherUpdate())}catch(e){$('launcherStatus').textContent=e.message;$('launcherStatus').classList.remove('visuallyHidden');$('launcherUpdate').disabled=false;}};
