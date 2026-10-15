@@ -1,0 +1,5 @@
+/.vexora-keys/
+**/node_modules/
+**/dist/
+**/verification/
+**/*private*key*.pem
