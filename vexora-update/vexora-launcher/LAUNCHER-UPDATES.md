@@ -1,95 +1,119 @@
-# Vexora 1.2.0 launcher updates
+# Vexora launcher updates — free signing-key setup (1.2.1)
 
-Source: vexora-update/vexora-launcher. No files under sources/ were changed.
+This replaces the certificate-based instructions from 1.2.0. No paid Windows
+certificate is required for this setup. Windows may display an unknown-publisher
+warning during first installation; update signatures do not establish Windows
+publisher reputation.
 
-## Build and run
+## Your next step
 
-Use Node 22 LTS and Windows x64. Run `npm ci`, then `npm start` for development,
-`npm test` for the update controller tests, or `npm run dist` for an unsigned local
-NSIS installer. If npm blocks Electron's install script, allow the trusted Electron
-package's install script and run `node node_modules/electron/install.js`.
-Unsigned development builds deliberately cannot self-update. Never distribute
-those as the official release. `npm run portable` produces an unpacked testing
-folder, not a supported self-update installation.
+A persistent Ed25519 key pair has been generated on this computer:
+- PRIVATE: ../../.vexora-keys/update-private-key.pem (relative to this source).
+- PUBLIC: update-public-key.pem (safe to commit and distribute).
 
-## Secure official release
+Back up the private file securely. Do not paste it into chat, upload it as a
+repository file, attach it to a release, or regenerate it for each version.
+The source ZIP contains the public key ONLY. The private file is intentionally
+outside the source directory and excluded by .gitignore.
 
-The public release feed is Floris-Games/vexora-updates on GitHub, the existing
-updates repository. Confirm you control it before the first release. Keep that
-feed, package name vexora-launcher, productName Vexora, appId com.vexora.launcher,
-and installer scope stable for every release.
+On GitHub, open Floris-Games/vexora-updates -> Settings -> Secrets and variables
+-> Actions -> New repository secret. Name it VEXORA_UPDATE_PRIVATE_KEY. Open
+the private PEM file locally, copy the entire contents including BEGIN/END
+lines, paste into the Secret field, and save. Do not share a screenshot of the
+secret value. This is the ONLY required user-created secret for this workflow.
+The workflow uses GitHub's temporary built-in token to create draft releases.
 
-Obtain a trusted Windows Authenticode signing certificate. Configure:
-- VEXORA_PUBLISHER: exact signing certificate subject / publisher common name.
-- CSC_LINK: secure PFX location or base64 PFX (CI secret).
-- CSC_KEY_PASSWORD: certificate password (CI secret).
-- GH_TOKEN: a token with release-writing permission on Floris-Games/vexora-updates.
+Under Settings -> Environments, create launcher-release if needed. Repository
+secrets are available to its job. Optional environment approvals can protect
+release builds. Run only trusted source: any release workflow that can access
+the secret can sign updates. Keep the GitHub account protected.
 
-Run `npm run release`. The separate release config requires code signing and
-embeds the expected publisher into app-update.yml. It creates a DRAFT release;
-inspect its installer, latest.yml and .exe.blockmap before publishing the draft.
-Do not upload only the installer. Do not edit checksums manually. Build all
-artifacts together from the committed lockfile. Use a higher package version
-for each release. Never replace an already published version's binaries.
+## First release
 
-The workspace-level .github/workflows/vexora-release.yml provides a manual
-Windows build. It expects this workspace's directory layout. If moving just the
-launcher to the repository root, update working-directory, cache and artifact
-paths. Set environment launcher-release with protected approvals, the
-VEXORA_PUBLISHER variable, CSC_LINK/CSC_KEY_PASSWORD secrets, and a
-VEXORA_RELEASE_TOKEN secret scoped to the release repository. GITHUB_TOKEN
-cannot publish to a different repository. Signing secrets belong only in CI,
-never in the app, config.json, or source archives. No token is needed by players
-because release downloads are public.
+Commit the updated source, public key and .github/workflows/vexora-release.yml.
+Do not use the old certificate workflow. Actions -> Build Vexora release with
+update key -> Run workflow. It builds 1.2.1 and uploads FOUR assets to a DRAFT:
+VexoraSetup-1.2.1.exe, its .blockmap, latest.yml and vexora-update.json.
+Inspect/test the installer before publishing the draft as a stable release.
+The workflow refuses to replace artifacts in an already published version.
+No certificate secrets or personal GitHub release token are required when
+building in Floris-Games/vexora-updates itself. Do not fork this release workflow
+and expect it to publish to the original repository.
 
-## Player experience and verification
+Existing 1.1.2 users must manually install the new key-enabled launcher once.
+The old certificate-based 1.2.0 build also needs this manual transition because
+it will reject unsigned Windows installers. Install over the existing Vexora,
+using the same Windows account and installer scope. Later versions use the same
+private key. Never publish an update signed by a different key without an
+explicit key-transition design for already-installed launchers.
 
-An installed signed launcher checks 10 seconds after opening; the visible
-Check launcher updates button also retries at any time. A newer stable version
-shows Update & Restart. Clicking downloads via electron-updater, verifies its
-SHA-512 checksum against GitHub's HTTPS metadata, and checks its Authenticode
-signature against the embedded publisher. Only then does NSIS install and
-relaunch. Downgrades, prereleases and automatic installation on ordinary quit
-are disabled. Offline failures leave the current launcher usable. A successful
-cached download can be reused on retry. Close game windows and let game installs
-finish before updating. If a game starts during download, the verified update
-waits for another click. Externally launched native games must be closed manually.
+## What is authenticated
 
-The update IPC is accepted only from the launcher's main frame. Renderer input
-cannot choose a feed, URL, publisher or installer file. An unsigned/missing-feed
-build fails closed. GitHub metadata checksums detect corruption; the pinned
-publisher signature supplies installer authenticity. Protect repository access
-and signing keys. No custom installer downloads or shell execution were added.
+sign-release.cjs hashes the FULL installer and signs a descriptor containing app
+identity, exact version, filename, byte size and SHA-512 with Ed25519. The packaged
+public key verifies that signed descriptor. Before offering an update Vexora
+requires electron-updater's GitHub release information to match it exactly.
+After download, Vexora independently hashes the actual installer, including
+files reused from updater cache, before allowing quitAndInstall. It checks the
+cached installer again on a deferred install attempt. A downloaded event alone
+never authorizes installation. Prereleases, downgrades, web installers and
+installation on ordinary quit are disabled.
 
-## Preserved data and first upgrade
+This uses a Vexora-specific detached signature with stable electron-updater
+6.8.9; it does NOT rely on the unreleased v27 signed-manifest feature. Windows
+Authenticode verification is replaced by this explicit pinned-key gate, not
+simply turned off without replacement. Authenticode identity and update
+signature authentication are different guarantees.
 
-Login code and game-manifest update behavior remain intact. auth-session.bin,
-installed.json, downloaded Silver Road and Chromium local storage continue to
-use the SAME Electron userData path (%APPDATA%/vexora-launcher by default).
-There is no data migration or cleanup during launcher updates. NSIS
-explicitly preserves app data on uninstall. Keep the same Windows user,
-application identity and installer scope. Back up userData before acceptance
-checks. Online Silver Road continues to load its existing hosted game.
+The descriptor is fetched from the fixed public GitHub latest-release URL over
+HTTPS with timeouts and a size bound. An absent/bad signature, feed mismatch,
+metadata mismatch, network failure or corrupt installer leaves the old launcher
+usable. Publishing the descriptor and all other files together in a draft avoids
+partially visible releases. A server attacker without the private key cannot
+forge installers. They may deny service or replay an older signed release;
+version checks prevent downgrading an installed version. Protect the local
+machine too: local malware able to modify Vexora or its running process is outside
+this update mechanism's security boundary.
 
-Existing 1.1.2 launchers have no self-updater. Players must manually install the
-first signed 1.2.0 installer over their existing installation once. Subsequent
-signed releases support Update & Restart.
+## Data and games
 
-## Acceptance before public distribution
+Package name vexora-launcher, appId com.vexora.launcher, productName Vexora and
+NSIS scope remain stable. Login code, Silver Road online play and the existing
+game updater are unchanged. User data, encrypted auth-session.bin, installed
+metadata and downloaded games remain in the existing userData directory
+(%APPDATA%/vexora-launcher by default). There is no migration or deletion.
+The updater blocks restart while an in-app game window or game installation is
+active. Close externally launched native games manually.
 
-1. Install signed 1.2.0 on a disposable Windows account/VM, log in, install a
-   game, and record hashes of installed game files and a local save marker.
-2. Publish signed 1.2.1 to the same public release repository with all artifacts.
-3. Check, Update & Restart, confirm the process version is 1.2.1, login remains,
-   game hashes/installed metadata/save marker remain and Silver Road launches.
-4. Repeat offline, interrupted download, wrong publisher and corrupted download;
-   the old launcher must remain runnable and unverified installers must not run.
-5. Test with Silver Road open and a game installation in progress; restart must
-   be blocked. Test ordinary quit after download does not silently install.
+## Local commands (Node 22 LTS, Windows x64)
 
-Automated controller tests use injected updater events; they do not prove
-real Windows signature verification or installation. Real two-version acceptance
-requires your certificate and published releases. These have not been provided.
-See TEST-RESULTS.md for what was actually run.
+npm ci
+node node_modules/electron/install.js
+npm test
+npm start
+npm run dist -- --publish never
 
-Tooling reference: https://www.electron.build/auto-update
+The dist command builds a local installer but does not sign a release descriptor.
+For a release, supply VEXORA_UPDATE_PRIVATE_KEY securely in the environment and
+run npm run release. It validates the private/public key pair, builds without
+publishing, then signs the installer descriptor. Never put a private key on the
+command line. CI is preferred so it is supplied through a masked secret.
+
+npm run setup-update-key creates keys only when neither key exists; otherwise
+it retains the existing key or fails rather than replacing an installed trust
+key. The currently supplied public key already belongs to this project's local
+private key: restore that private key from backup on other computers.
+
+## Acceptance before players use Update & Restart
+
+1. In a disposable Windows VM/account, install key-enabled 1.2.1. Log in, install
+   a game, create a save marker and record installed-game file hashes.
+2. Build/publish 1.2.2 using the SAME key and all four assets.
+3. Update & Restart; verify the new version, login, game hashes, metadata, saves
+   and Silver Road online play.
+4. Check offline behavior, interrupted downloads, wrong-key signatures,
+   modified metadata and installer corruption. No rejected installer may run.
+5. Open Silver Road or start a game install during download; installation must
+   wait until those operations finish and the player clicks again.
+
+See TEST-RESULTS.md for actual test coverage and remaining acceptance work.

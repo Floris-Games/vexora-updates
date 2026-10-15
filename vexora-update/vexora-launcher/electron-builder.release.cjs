@@ -1,3 +1,3 @@
-const base=require('./package.json').build;
-if(!process.env.VEXORA_PUBLISHER)throw Error('Set VEXORA_PUBLISHER to the exact certificate subject.');
-module.exports={...base,forceCodeSigning:true,win:{...base.win,publisherName:process.env.VEXORA_PUBLISHER}};
+// Authenticity is checked by update-security.js against the pinned Ed25519 key.
+// This does not give the installer a Windows Authenticode publisher identity.
+module.exports={...require('./package.json').build,forceCodeSigning:false};

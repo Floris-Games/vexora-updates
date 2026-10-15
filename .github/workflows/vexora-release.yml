@@ -1,8 +1,11 @@
-name: Build signed Vexora release
+name: Build Vexora release with update key
 on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: vexora-launcher-release
+  cancel-in-progress: false
 jobs:
   windows:
     runs-on: windows-latest
@@ -18,17 +21,35 @@ jobs:
           cache: npm
           cache-dependency-path: vexora-update/vexora-launcher/package-lock.json
       - run: npm ci
+      - run: node node_modules/electron/install.js
       - run: npm test
       - run: npm run release
         env:
-          VEXORA_PUBLISHER: ${{ vars.VEXORA_PUBLISHER }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          GH_TOKEN: ${{ secrets.VEXORA_RELEASE_TOKEN }}
-      - uses: actions/upload-artifact@v4
+          VEXORA_UPDATE_PRIVATE_KEY: ${{ secrets.VEXORA_UPDATE_PRIVATE_KEY }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Save installer and signature
+        uses: actions/upload-artifact@v4
         with:
           name: Vexora-Windows
           path: |
             vexora-update/vexora-launcher/dist/*.exe
             vexora-update/vexora-launcher/dist/*.blockmap
             vexora-update/vexora-launcher/dist/latest.yml
+            vexora-update/vexora-launcher/dist/vexora-update.json
+      - name: Upload to draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: Floris-Games/vexora-updates
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $tag = "v$version"
+          $existing = gh release view $tag --json isDraft 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            if (-not ($existing | ConvertFrom-Json).isDraft) { throw 'This version is already published. Increase the version before building.' }
+          } else {
+            gh release create $tag --draft --target $env:GITHUB_SHA --title "Vexora $version" --notes 'Launcher update signed with the Vexora update key. Windows may show an unknown publisher warning.'
+            if ($LASTEXITCODE -ne 0) { throw 'Could not create draft release' }
+          }
+          gh release upload $tag "dist/VexoraSetup-$version.exe" "dist/VexoraSetup-$version.exe.blockmap" dist/latest.yml dist/vexora-update.json --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Could not upload all release artifacts' }
